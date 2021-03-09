@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lagou.dao.UserMapper">
+    <select id="findUserByPageAndCondition" parameterType="UserVo" resultType="User">
+        SELECT id,name,portrait,phone,password,status,create_time FROM user
+        <where>
+            <if test="true">
+            and is_del != 1
+            </if>
+            <if test="username != null">
+            and name = #{username}
+            </if>
+            <if test="startCreateTime != null and endCreateTime != null">
+            and create_time BETWEEN #{startCreateTime} AND #{endCreateTime}
+            </if>
+        </where>
+    </select>
+    <select id="login" parameterType="user" resultType="user">
+          select * from user where phone = #{phone}
+    </select>
+    <select id="findAllRoleByUserId" parameterType="int" resultType="role">
+       SELECT DISTINCT r.* FROM `user` u INNER JOIN user_role_relation ur ON ur.user_id=u.id INNER JOIN roles r ON r.id=ur.role_id WHERE u.id=#{id}
+    </select>
+    <delete id="deleteUserRoleByUiD" parameterType="int">
+          delete from  user_role_relation where user_id = #{userid}
+    </delete>
+    <select id="addUserRole" parameterType="user_role_relation">
+       insert into user_role_relation values(null,#{userId},#{roleId},#{createdTime},#{updatedTime},#{createdBy},#{updatedby})
+    </select>
+
+    <select id="findParentMenuByRoleId" parameterType="java.util.List" resultType="menu">
+      SELECT
+        DISTINCT m.*
+        FROM
+        roles r INNER JOIN role_menu_relation rm ON r.id=rm.role_id
+        INNER JOIN menu m ON rm.menu_id=m.id
+        WHERE
+        m.parent_id=-1 AND r.id IN
+      <foreach collection="list" item="item" separator="," open="(" close=")">
+          #{item}
+      </foreach>
+    </select>
+
+    <!--根据父级菜单Id来查询子级菜单-->
+    <select id="findSubMenuByParentId" parameterType="int" resultType="menu">
+       select * from menu where parent_id=#{id}
+    </select>
+    <select id="findResourceByRoleId" parameterType="java.util.List" resultType="resource">
+       SELECT
+       DISTINCT rs.*
+       FROM roles r INNER JOIN role_resource_relation rr ON r.id=rr.role_id
+       INNER JOIN resource rs ON rr.resource_id=rs.id
+       WHERE r.id IN
+        <foreach collection="list" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+</mapper>
